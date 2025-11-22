@@ -510,6 +510,10 @@ This project is built on top of the original **GANformer** implementation by **D
 - Official repository: https://github.com/dorarad/gansformer  
 - Original paper / dissertation: *Generative Adversarial Transformers (GANformer)* by Dor Arad et al.
 
+The battlefield imagery is derived from the **Military Assets Dataset (12 classes, YOLOv8 format)** created by **rawsi18** on Kaggle:
+
+- Dataset: https://www.kaggle.com/datasets/rawsi18/military-assets-dataset-12-classes-yolo8-format
+
 All core model code, architecture definitions, and training scripts are from the official GANformer repo; this project only adds:
 - a pretrained battlefield checkpoint,
 - dataset preparation details,
