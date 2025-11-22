@@ -58,7 +58,7 @@ Conceptually, this matches the dissertation’s argument that **compositional la
 
 **Dataset**
 
-- Source: Military Assets / battlefield imagery (YOLO-style dataset)
+- Source: [Military Assets Dataset (12 classes, YOLOv8 format)](https://www.kaggle.com/datasets/rawsi18/military-assets-dataset-12-classes-yolo8-format?resource=download)
 - After filtering & preprocessing:
   - **26,315** training images
   - All resized to **256×256**, 3 channels (RGB)
