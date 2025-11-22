@@ -18,6 +18,25 @@ This repo only provides:
 
 ---
 
+## Battlefield GANformer model – summary
+
+- **Architecture:** GANformer (official `ganformer/pytorch_version`, `--ganformer-default`)
+- **Resolution:** 256 × 256
+- **Dataset:** Battlefield scenes from Military Assets dataset  
+  – ~26,315 images after filtering & resizing  
+  – RGB, center-cropped / resized to 256 × 256
+- **Training:**
+  - Trainer: `run_network.py` with `--ganformer-default`
+  - Target: `--total-kimg 8000`, **stopped manually at ~1224 kimg**
+  - Hardware: NVIDIA RTX 4090 (24 GB), ~122 sec / kimg
+- **Checkpoint shared here:**
+  - Snapshot: `network-snapshot-001224.pkl`
+  - This is the model used in all battlefield samples in this repo.
+- **Metrics:**
+  - FID5k fell from ~316 (early) → **≈74–75** by 1100–1200 kimg
+  - Best observed FID5k around the shared snapshot: **≈74.5**
+
+
 ## 1. Requirements
 
 You will need:
