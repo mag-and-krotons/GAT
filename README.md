@@ -8,29 +8,204 @@ This repository explains how to:
 3. Download and use our **pretrained battlefield GANformer model**.
 4. Train GANformer on **your own dataset** and generate images.
 ---
+## Research motivation
 
-## Battlefield GANformer model – summary
+This repo accompanies a small research project exploring **Generative Adversarial Transformers (GANformer)** for complex military imagery.
 
-- **Architecture:** GANformer (official `ganformer/pytorch_version`, `--ganformer-default`)
-- **Resolution:** 256 × 256
-- **Dataset:** Battlefield scenes from Military Assets dataset  
-  – ~26,315 images after filtering & resizing  
-  – RGB, center-cropped / resized to 256 × 256
-- **Training:**
-  - Trainer: `run_network.py` with `--ganformer-default`
-  - Target: `--total-kimg 8000`, **stopped manually at ~1224 kimg**
-  - Hardware: NVIDIA RTX 4090 (24 GB), ~122 sec / kimg
-- **Checkpoint shared here:**
-  - Snapshot: `network-snapshot-001224.pkl`
-  - This is the model used in all battlefield samples in this repo.
-- **Metrics:**
-  - FID5k fell from ~316 (early) → **≈74–75** by 1100–1200 kimg
-  - Best observed FID5k around the shared snapshot: **≈74.5**
+Instead of classical StyleGAN on faces or bedrooms, we deliberately chose a **hard, composite domain**:
 
-  ## Training curve (FID vs kimg)
+- Battlefield scenes with **multiple objects** (tanks, artillery, landscape, tracks, smoke, etc.)
+- Strong variation in **viewpoint, scale and background**
+- Significant **noise in the data** (motion blur, compression, camera quality)
+
+The goal was **not** to beat SOTA FID on a clean benchmark, but to:
+
+1. Verify that Dor Arad’s **GANformer architecture** can learn coherent structure on such a dataset.
+2. Study how far we can get with **one RTX 4090** and a fixed time budget.
+3. Document the **practical engineering pain points** of reproducing this type of model outside a lab environment.
+
+
+## Methodology & architecture
+
+We use the **official GANformer PyTorch implementation** (`pytorch_version`) with the `--ganformer-default` configuration:
+
+- **Generator**:
+  - A set of **latent tokens** (object slots) attends to convolutional feature maps.
+  - Duplex attention allows **top-down (latents → image features)** and **bottom-up (image features → latents)** information flow.
+  - This supports compositional structure: different latents specialize to different regions / parts of the scene.
+
+- **Discriminator**:
+  - Convolutional backbone with **transformer blocks** attending over spatial features.
+  - Encourages consistency between local texture and global layout.
+
+- **Training objective**:
+  - Non-saturating GAN loss with **R1 regularization**, as in StyleGAN2 / GANformer.
+  - FID is periodically evaluated on 5k generated samples (**FID5k**) against real battlefield images.
+
+- **Data pipeline**:
+  - Raw images → center crop / resize to **256×256 RGB**.
+  - Packed into an internal GANformer dataset using `prepare_data.py`, then streamed with augmentations during training.
+
+Conceptually, this matches the dissertation’s argument that **compositional latent structure + attention** can generalize better on multi-object scenes than a single global style vector.
+
+## Experimental setup
+
+**Hardware**
+
+- GPU: NVIDIA RTX 4090 (24 GB)
+- Host: Linux environment (RunPod)
+- Approx. speed: ~120–123 sec / kimg at 256×256
+
+**Dataset**
+
+- Source: Military Assets / battlefield imagery (YOLO-style dataset)
+- After filtering & preprocessing:
+  - **26,315** training images
+  - All resized to **256×256**, 3 channels (RGB)
+  - Significant diversity in:
+    - Camera angle (ground, slightly aerial)
+    - Scene type (desert, forest, mud, urban edges)
+    - Number and type of vehicles / assets
+
+**Training configuration**
+
+- Script: `run_network.py`
+- Key flags:
+
+  ```bash
+  python run_network.py \
+    --train \
+    --gpus 0 \
+    --ganformer-default \
+    --expname battlefield-scratch \
+    --dataset battlefield \
+    --data-dir datasets \
+    --resolution 256 \
+    --total-kimg 8000 \   # target only, we stopped earlier
+    --eval-images-num 5000 \
+    --metrics fid
+
+
+ ## Training curve (FID vs kimg)
 
 ![FID vs kimg for battlefield GANformer](images/graph.png)
 
+## Results
+
+### Quantitative
+
+The plot below shows the **approximate FID5k** trajectory during training  
+(FID measured on 5k generated samples vs. the real battlefield dataset).
+
+![FID vs kimg for battlefield GANformer](images/fid_vs_kimg_battlefield.png)
+
+- Early training (24–48 kimg) is extremely noisy:
+  - FID ≈ **316 → 261**
+  - Samples are pure colored noise / blobs.
+- Mid training (400–800 kimg):
+  - FID drops into the **90–80** range.
+  - Coarse structure appears: sky, ground plane, large green/brown masses that roughly look like vehicles or terrain patches.
+- Late training (1000–1224 kimg):
+  - FID stabilizes around **74–75**.
+  - Vehicles become recognizable, with rough silhouettes and plausible shading.
+  - Background layouts (road, tracks, dunes, fields) are clearly visible.
+
+Given the difficulty of the dataset and limited kimg budget, this is a **reasonable convergence point**, but not photorealistic.
+
+### Qualitative
+
+Visually, the model captures:
+
+- Coherent **global layout**: horizon line, sky vs. ground, rough perspective.
+- Emergence of **vehicle-like blobs** with turrets, tracks, and shadows.
+- Scene-level consistency: objects appear in plausible places (on the ground, following tracks, etc.).
+
+However, it struggles with:
+
+- **Fine texture:** armor plating, small details, tracks, dust plumes.
+- **Sharp edges:** outlines are often smeared or “melting” into the background.
+- **Object identity:** tanks / APCs / artillery often blur into generic “military metal lumps”.
+
+This matches expectations from the dissertation: GANformer can model **composition and layout** relatively early, but achieving **pixel-level realism** requires more data, longer training, and additional tuning.
+
+## Engineering challenges & lessons learned
+
+This project was intentionally run in a **realistic, messy environment**, not a perfectly curated lab setup. A non-exhaustive list of issues we hit:
+
+### 1. Environment & CUDA mismatches
+
+- On Colab and some local setups we encountered errors like:
+
+  - `upfirdn2d_plugin` / `conv2d_gradfix` not found  
+  - Custom ops failing to compile due to **Torch/CUDA version drift**
+
+- Resolution: we eventually moved to a **fixed Docker/RunPod image** and stopped trying to support “whatever PyTorch happens to be installed”.
+- Takeaway: **GANformer is sensitive** to exact library versions; reproducing results on arbitrary Colab runtimes is painful.
+
+### 2. Storage and volume configuration
+
+- We initially underestimated **volume disk size**:
+  - Dataset (26k images), checkpoints, and FID caches quickly filled the default volume.
+- We had to:
+  - Increase the **persistent volume**, and
+  - Be careful about old experiment folders under `results/`.
+- Takeaway: for 256×256 experiments with many snapshots, budget **tens of GB** of disk, not a tiny sandbox.
+
+### 3. Remote file transfer friction
+
+- Exporting samples & snapshots from the pod required setting up **`rclone` → Google Drive**.
+- Installing `rclone` inside the container and doing the manual OAuth token flow was tedious but ultimately worked.
+- Takeaway: plan a **clean logging + export strategy** early (rclone, S3, or SCP), otherwise you lose snapshots or waste time shuttling files.
+
+### 4. Dataset complexity vs. resources
+
+- The battlefield dataset is:
+  - Large (26k images),
+  - Highly varied,
+  - And visually cluttered.
+- With a **single 4090 and ~24h of wall-time**, we had to stop at ~1224 kimg.
+- The model clearly **had not saturated yet**; more kimg would likely give:
+  - Better textures,
+  - Sharper edges,
+  - Lower FID.
+
+We also considered training **smaller, more coherent subsets** (e.g. “weapons only” or “soldiers only” ~700–1000 images), but did not have GPU time to run those experiments.
+
+### 5. Unrealistic expectations vs. real constraints
+
+- It is very tempting to compare ourselves to the **face samples** from the GANformer repo (which are almost perfectly photorealistic).
+- In reality, those results benefit from:
+  - Clean, curated datasets (FFHQ),
+  - Longer training,
+  - Heavy engineering on hyper-parameters and augmentations.
+
+Our battlefield model demonstrates **successful learning of structure and composition**, but not the “you can’t tell it’s fake” level.  
+This is important to state honestly for anyone reading this as “research work”.
+
+## Limitations & future work
+
+**Limitations**
+
+- **Under-training:** stopping at ~1224 kimg is significantly below the 8k–25k kimg regimes used in many StyleGAN/GANformer papers for complex datasets.
+- **No class conditioning:** we trained a **single unconditional model** on all battlefield images.  
+  There is no label or class information (e.g. tank vs. APC vs. artillery), which makes the generative problem harder.
+- **Approximate metrics:** the FID curve in this repo is reconstructed from logged values and is meant to show **trends**, not be a strict benchmark.
+- **Single resolution:** we only trained at **256×256**; higher resolutions would require more memory and longer runs.
+
+**Future work**
+
+- **Longer training & hyper-parameter sweeps**:
+  - Explore training up to 4k–8k kimg on the same dataset.
+  - Try alternative regularization strength, learning rates, and augmentations.
+- **Class-conditional GANformer**:
+  - Use YOLO labels (e.g. weapon, soldier, vehicle) to train a conditional or multi-head model.
+- **Smaller, coherent subsets**:
+  - Weapons-only model (≈700–1000 images).
+  - Soldiers-only model, or a vehicle-only subset.
+  - Compare sample quality and FID to the full mixed battlefield dataset.
+- **Attention visualization**:
+  - Visualize which spatial regions each latent token attends to.
+  - Connect this to the dissertation’s discussion of **compositional representation learning** and object-level specialization.
 
 
 ## 1. Requirements
