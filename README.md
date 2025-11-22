@@ -1,5 +1,5 @@
 
-# GANformer Battlefield Model (GAT) — Local Setup Guide
+# GANformer Battlefield Model (GAT) — Research & Local Setup Guide
 
 This repository explains how to:
 
