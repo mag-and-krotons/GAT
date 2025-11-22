@@ -128,6 +128,14 @@ However, it struggles with:
 
 This matches expectations from the dissertation: GANformer can model **composition and layout** relatively early, but achieving **pixel-level realism** requires more data, longer training, and additional tuning.
 
+## Sample generations
+
+The grid below shows 8 samples (4×2) from the shared battlefield checkpoint
+`network-snapshot-001224.pkl` at 256×256 resolution.
+
+![Battlefield GANformer samples](images/battlefield_samples_grid.png)
+
+
 ## Engineering challenges & lessons learned
 
 This project was intentionally run in a **realistic, messy environment**, not a perfectly curated lab setup. A non-exhaustive list of issues we hit:
@@ -498,3 +506,13 @@ You should see your generated images there.
 
 If you can successfully run the official GANformer repo on your machine,  
 you can plug in this battlefield model and your own images using the commands above.
+
+
+## Contact & feedback
+
+This repository is part of an ongoing study of Generative Adversarial Transformers on complex military imagery.
+
+For clarification of any details, discussion of results, or proposals for further experiments, please contact:
+
+**Abhijit Singh**  
+📧 `abhijitsingh777@gmail.com`
