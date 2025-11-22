@@ -84,9 +84,10 @@ Conceptually, this matches the dissertation’s argument that **compositional la
     --total-kimg 8000 \   # target only, we stopped earlier
     --eval-images-num 5000 \
     --metrics fid
+  ```
 
 
- ## Training curve (FID vs kimg)
+## Training curve (FID vs kimg)
 
 ![FID vs kimg for battlefield GANformer](images/graph.png)
 
@@ -216,6 +217,8 @@ This is important to state honestly for anyone reading this as “research work�
   - Connect this to the dissertation’s discussion of **compositional representation learning** and object-level specialization.
 
 
+## Environment & setup requirements
+
 ## 1. Requirements
 
 You will need:
@@ -325,11 +328,8 @@ Download it via GitHub Releases:
 
 ```bash
 # From inside gansformer/pytorch_version
-wget https://github.com/mag-and-krotons/GAT/releases/download/v1.0.0/network-snapshot-001224.pkl
+wget https://github.com/mag-and-krotons/GAT/releases/download/v1.0.0/network-snapshot-001224.pkl -O battlefield_snapshot_001224.pkl
 ```
-
-- Replace `YOUR_USERNAME/YOUR_REPO` and the tag (`v1.0.0`) with your actual values.
-- You get this URL from: **Repo → Releases → your release → right-click the .pkl asset → "Copy link address"**.
 
 After downloading, you should have:
 
@@ -506,6 +506,19 @@ You should see your generated images there.
 
 If you can successfully run the official GANformer repo on your machine,  
 you can plug in this battlefield model and your own images using the commands above.
+
+## Acknowledgements
+
+This project is built on top of the original **GANformer** implementation by **Dor Arad** and collaborators.
+
+- Official repository: https://github.com/dorarad/gansformer  
+- Original paper / dissertation: *Generative Adversarial Transformers (GANformer)* by Dor Arad et al.
+
+All core model code, architecture definitions, and training scripts are from the official GANformer repo; this project only adds:
+- a pretrained battlefield checkpoint,
+- dataset preparation details,
+- training logs, plots, and analysis,
+- and a reproducible workflow for running GANformer on this specific dataset.
 
 
 ## Contact & feedback
