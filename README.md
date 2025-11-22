@@ -7,15 +7,6 @@ This repository explains how to:
 2. Clone and use the **official GANformer (GAT)** repository by Dor Arad.
 3. Download and use our **pretrained battlefield GANformer model**.
 4. Train GANformer on **your own dataset** and generate images.
-
-All model code comes from the original GANformer repository:  
-👉 https://github.com/dorarad/gansformer
-
-This repo only provides:
-
-- A **pretrained battlefield checkpoint** (`network-snapshot-001224.pkl`).
-- Clear instructions to set everything up **locally** (no Colab).
-
 ---
 
 ## Battlefield GANformer model – summary
