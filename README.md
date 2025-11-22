@@ -36,6 +36,11 @@ This repo only provides:
   - FID5k fell from ~316 (early) → **≈74–75** by 1100–1200 kimg
   - Best observed FID5k around the shared snapshot: **≈74.5**
 
+  ## Training curve (FID vs kimg)
+
+![FID vs kimg for battlefield GANformer](images/graph.png)
+
+
 
 ## 1. Requirements
 
