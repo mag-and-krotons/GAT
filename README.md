@@ -87,10 +87,6 @@ Conceptually, this matches the dissertation’s argument that **compositional la
   ```
 
 
-## Training curve (FID vs kimg)
-
-![FID vs kimg for battlefield GANformer](images/graph.png)
-
 ## Results
 
 ### Quantitative
@@ -98,7 +94,7 @@ Conceptually, this matches the dissertation’s argument that **compositional la
 The plot below shows the **approximate FID5k** trajectory during training  
 (FID measured on 5k generated samples vs. the real battlefield dataset).
 
-![FID vs kimg for battlefield GANformer](images/fid_vs_kimg_battlefield.png)
+![FID vs kimg for battlefield GANformer](images/graph.png)
 
 - Early training (24–48 kimg) is extremely noisy:
   - FID ≈ **316 → 261**
@@ -279,7 +275,7 @@ py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-If PowerShell blocks scripts, you may need to adjust the execution policy or use `cmd.exe` and `.\.venv\Scriptsctivate.bat`.
+If PowerShell blocks scripts, you may need to adjust the execution policy or use `cmd.exe` and `.\.venv\Scripts\activate.bat`.
 
 ---
 
@@ -343,7 +339,7 @@ With your virtual environment activated and the model downloaded:
 
 ```bash
 cd gansformer/pytorch_version
-source .venv/bin/activate      # or .\.venv\Scriptsctivate on Windows
+source .venv/bin/activate      # or .\.venv\Scripts\activate on Windows
 
 python generate.py   --gpus 0   --model battlefield_snapshot_001224.pkl   --images-num 36   --output-dir battlefield_samples   --truncation-psi 0.7
 ```
